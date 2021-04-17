@@ -1,5 +1,206 @@
 # soal-shift-sisop-modul-2-E01-2021
+## Soal No.1
 
+Pada hari ulang tahun Stevany, Steven ingin memberikan Stevany zip berisikan hal-hal yang disukai Stevany. Steven ingin isi zipnya menjadi rapi dengan membuat folder masing-masing sesuai extensi. 
+### (a)
+Dikarenakan Stevany sangat menyukai huruf Y, Steven ingin nama folder-foldernya adalah Musyik untuk mp3, Fylm untuk mp4, dan Pyoto untuk jpg
+### (b)
+untuk musik Steven mendownloadnya dari link di bawah, film dari link di bawah lagi, dan foto dari link dibawah juga :).
+### (c)
+Steven tidak ingin isi folder yang dibuatnya berisikan zip, sehingga perlu meng-extract-nya setelah didownload serta
+### (d)
+memindahkannya ke dalam folder yang telah dibuat (hanya file yang dimasukkan).
+### (e)
+Untuk memudahkan Steven, ia ingin semua hal di atas berjalan otomatis `6 jam` sebelum waktu ulang tahun Stevany).
+### (f)
+Setelah itu pada waktu ulang tahunnya Stevany, semua folder akan di zip dengan nama Lopyu_Stevany.zip dan semua folder akan di delete(sehingga hanya menyisakan .zip).
+
+**Note :**
+- Ulang Tahun Stevany : 09 April Pukul 22.22 WIB
+- Semua poin dijalankan oleh 1 script di latar belakang, termasuk mendownload file zip-nya. Jadi cukup jalankan script 1x serta ubah time dan date untuk check hasilnya.
+
+> Preview :
+https://drive.google.com/drive/folders/1NzRiPPoVlR_H8P51cxN4jaceeFQGk4un
+> *tontonnya 720p biar jelas.. ಠ‿ಠ
+- Tidak boleh menggunakan fungsi system(), mkdir(), dan rename() (Yang di bahasa C) .... FORBIDDENNN!!
+- Tidak boleh pake cron !!!
+- Menggunakan fork dan exec.
+- Link
+>Foto : https://drive.google.com/file/d/1FsrAzb9B5ixooGUs0dGiBr-rC7TS9wTD/view
+
+> Musik : https://drive.google.com/file/d/1ZG8nRBRPquhYXq_sISdsVcXx5VdEgi-J/view
+
+> Film : https://drive.google.com/file/d/1ktjGgDkL0nNpY-vT7rT7O6ZI47Ke9xcp/view
+
+## Penyelesaian No. 1
+
+Dikarenakan akan dikerjakan di latar belakang / background, maka akan digunakan daemon (template dari modul).
+
+Berikut awalan code yang masih termasuk dalam template daemon di modul
+```
+int main() {
+  pid_t pid, sid;       // Variabel untuk menyimpan PID
+  
+  pid = fork();     // Menyimpan PID dari Child Process
+
+  /* Keluar saat fork gagal
+  * (nilai variabel pid < 0) */
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  /* Keluar saat fork berhasil
+  * (nilai variabel pid adalah PID dari child process) */
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+
+  umask(0);
+
+
+  sid = setsid();
+  if (sid < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  if ((chdir("/home/nabil/")) < 0) {
+    exit(EXIT_FAILURE);
+  }
+
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+```
+Kecuali pada `chdir` diganti ke direktori user `/home/[user]` dalam hal ini `nabil` sebagai `user`
+### 1.a dan 1.b
+Dilakukan fork dan exec untuk mengeksekusi perintah pada bagian ini.
+```
+if (child_id == 0 && beda < 21600) {
+	int idx;
+	char *prog = "/usr/bin/wget";
+	char *prog2 = "/bin/mkdir";
+	char *argv[][6] = {  {prog,"--no-check-certificate","https://drive.google.com/uc?id=1ZG8nRBRPquhYXq_sISdsVcXx5VdEgi-J&export=download","-O", "./Musik_for_Stefany.zip", NULL},
+						{prog,"--no-check-certificate","https://drive.google.com/uc?id=1FsrAzb9B5ixooGUs0dGiBr-rC7TS9wTD&export=download","-O", "./Foto_for_Stefany.zip", NULL},
+						{prog,"--no-check-certificate","https://drive.google.com/uc?id=1ktjGgDkL0nNpY-vT7rT7O6ZI47Ke9xcp&export=download","-O", "./Film_for_Stefany.zip", NULL} };
+	char *argv2[][4] = { {prog2,"-p","./Musyik", NULL},
+						{prog2,"-p","./Pyoto", NULL},
+						{prog2,"-p","./Fylm", NULL} };
+	for (idx = 0; idx < 6; idx++)
+	{
+		if (0 == fork()) continue;
+		while ((wait(&status)) > 0);
+		if(idx < 3)
+		execv(prog, argv[idx]);
+		else if(idx < 6)
+		execv(prog2, argv2[idx-3]);
+	}
+	break;
+	//perlu end
+	// this is child
+	}
+```
+Penggunaan `fork` dengan `for` untuk secara mudah menyesuaikan program `exec` yang dibutuhkan. `prog` dan `argv[]` untuk mendownload (1.b) dan `prog2` dan `argv2[]` untuk membuat folder baru.
+
+### 1.c dan 1.d
+Dilakukan fork dan exec untuk mengeksekusi perintah pada bagian ini.
+```
+if(flag == 0 && beda < 21600){
+	int idx;
+	while ((wait(&status)) > 0);
+	sleep(7);
+	char *prog3 = "/usr/bin/unzip";
+	char *argv3[][6] = { {prog3,"-q","./Musik_for_Stefany.zip", "-d", "./", NULL},
+						{prog3,"-q","./Foto_for_Stefany.zip", "-d", "./", NULL},
+						{prog3,"-q","./Film_for_Stefany.zip", "-d", "./", NULL} };
+	for (idx = 0; idx < 4; idx++)
+	{
+		if (0 == fork()) continue;
+		sleep(7);
+		if(idx < 3)
+		execv(prog3, argv3[idx]);
+	}
+	sleep(5);
+	glob_t globbuf[3];
+	globbuf[0].gl_offs = 2;
+	glob("./FOTO/*.jpg", GLOB_DOOFFS, NULL, &globbuf[0]);
+	glob("./Pyoto/", GLOB_DOOFFS | GLOB_APPEND, NULL, &globbuf[0]);
+	globbuf[0].gl_pathv[0] = "cp";
+	globbuf[0].gl_pathv[1] = "-R";
+	globbuf[1].gl_offs = 2;
+	glob("./MUSIK/*.mp3", GLOB_DOOFFS, NULL, &globbuf[1]);
+	glob("./Musyik/", GLOB_DOOFFS | GLOB_APPEND, NULL, &globbuf[1]);
+	globbuf[1].gl_pathv[0] = "cp";
+	globbuf[1].gl_pathv[1] = "-R";
+	globbuf[2].gl_offs = 2;
+	glob("./FILM/*.mp4", GLOB_DOOFFS, NULL, &globbuf[2]);
+	glob("./Fylm/", GLOB_DOOFFS | GLOB_APPEND, NULL, &globbuf[2]);
+	globbuf[2].gl_pathv[0] = "cp";
+	globbuf[2].gl_pathv[1] = "-R";
+	
+	for (idx = 0; idx < 4; idx++)
+	{
+		if (0 == fork()) continue;
+		if(idx < 3)
+		execvp("cp", &globbuf[idx].gl_pathv[0]);
+	}
+	flag = 1;
+}
+```
+`prog3` dan `argv3` digunakan untuk unzip (1.c) caranya sama seperti pada bagian `1.a dan 1.b`, karena saat memindahkan terdapat wildcard maka digunakan `glob` untuk mengeksekusi `cp`.
+### 1.e
+Pengukuran `waktu` (time.h) di atur sejak awal dan berada pada awal setiap `if` dari `fork`.
+```
+struct tm t;
+
+   t.tm_sec    = 0;
+   t.tm_min    = 22;
+   t.tm_hour   = 22;
+   t.tm_mday   = 9;
+   t.tm_mon    = 3;
+   t.tm_year   = 121;
+   t.tm_wday   = 5;
+
+   double beda;
+
+   time_t rawtime;
+
+   pid_t child_id;
+    int status;
+
+    child_id = fork();
+
+    // chdir("/home/nabil/");
+
+  while (1) {
+    time(&rawtime);
+      beda = difftime(mktime(&t),rawtime);
+      if (child_id < 0) {
+         exit(EXIT_FAILURE); // Jika gagal membuat proses baru, program akan berhenti
+      }
+
+      if (child_id == 0 && beda < 21600) {
+		  ...
+```
+### 1.f
+Dilakukan fork dan exec untuk mengeksekusi perintah pada bagian ini.
+```
+if(flag && beda < 0){
+	int stattt;
+	if (0 == fork()){
+	sleep(3);
+	char *prog3 = "zip";
+	char *argv3[7] = {prog3,"-r","./Lopyu_Stefany.zip", "./Musyik", "./Fylm","./Pyoto", NULL};
+	execvp(prog3, argv3);
+	} else {
+	while ((wait(&stattt)) > 0);
+	sleep(9);
+	char *prog4 = "rm";
+	char *argv4[9] = {prog4,"-rf", "./FILM","./FOTO","./MUSIK", "./Musyik", "./Fylm","./Pyoto", NULL};
+	execvp(prog4, argv4);
+	}
+}
+```
+Penggunaan `fork` dengan `for` untuk secara mudah menyesuaikan program `exec` yang dibutuhkan. `prog3` dan `argv3[]` untuk Zip dan `prog4` dan `argv4[]` untuk mendelete folder2.
 
 ## Soal No.2
 Loba bekerja di sebuah petshop terkenal, suatu saat dia mendapatkan zip yang berisi banyak sekali foto peliharaan dan Ia diperintahkan untuk mengkategorikan foto-foto peliharaan tersebut. Loba merasa kesusahan melakukan pekerjaanya secara manual, apalagi ada kemungkinan ia akan diperintahkan untuk melakukan hal yang sama. Kamu adalah teman baik Loba dan Ia meminta bantuanmu untuk membantu pekerjaannya.
