@@ -153,6 +153,31 @@ void make_dir(char *filename) {
     }
 }
 
+void create_killer() {
+    pid_t child_id;
+    int status;
+
+    child_id = fork();
+
+    if (child_id < 0) exit(EXIT_FAILURE);
+
+    if (child_id == 0) {
+        char output[100],
+            text[] =
+                "#!/bin/bash\nmyarr=($(ps aux | grep './soal3' | awk '{ print "
+                "$2 }'))\nif [[ $1 = \"-z\" ]]\nthen\nfor i in "
+                "\"${myarr[@]}\"\ndo\nkill -9 $i\ndone\nelif [[ $1 = \"-x\" "
+                "]]\nthen\nkill -9 ${myarr[0]}\nfi\n";
+        printf("%s", text);
+        sprintf(output, "%s/killer.sh", FILE_DIR);
+        FILE *fptrout = fopen(output, "w");
+        fputs(text, fptrout);
+        fclose(fptrout);
+
+        exit(EXIT_SUCCESS);
+    }
+}
+
 int main(int argc, char const *argv[]) {
     // 1. Get isi file .txt ke variabel string (fgets)
     // 2. Buat int counter nama file
@@ -189,8 +214,8 @@ int main(int argc, char const *argv[]) {
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 
-    int counter = 3;
-    while (counter--) {
+    create_killer();
+    while (1) {
         // Tulis program kalian di sini
         time_t t = time(NULL);
         struct tm tm = *localtime(&t);
